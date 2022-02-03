@@ -14,10 +14,6 @@ from spotipy.oauth2 import SpotifyOAuth
 
 # API Calls #
 
-cid = 'ce9c37183c77483f8d365f7731f0345f'
-secret = '3c97cdd90ccf424c8d8e0fcddf9590a7'
-redirect_uri = 'http://127.0.0.1:9090'
-
 # scope = 'playlist-modify-public'
 # sp_create_playlist = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=cid, client_secret=secret, redirect_uri=redirect_uri, scope=scope))
 # sp_create_playlist.user_playlist_create('michaelmarzec11', name='test')
