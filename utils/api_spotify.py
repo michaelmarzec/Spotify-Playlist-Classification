@@ -19,36 +19,28 @@ from spotipy.oauth2 import SpotifyOAuth
 # API Calls #
 
 #ADD LOCAL ENVIRONMENT #####################################
-
 redirect_uri = 'http://127.0.0.1:9090'
+username = 'michaelmarzec11'
+scope = 'user-library-read playlist-modify-public'
 ############################################################
 
-# scope = 'playlist-modify-public'
-# sp_create_playlist = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=spotify_cid, client_secret=spotify_secret, redirect_uri=redirect_uri, scope=scope))
-# sp_create_playlist.user_playlist_create('michaelmarzec11', name='test')
-
-
-scope = 'user-library-read'
-sp_read_liked_songs = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=spotify_cid, client_secret=spotify_secret, redirect_uri=redirect_uri, scope=scope))
-sp_audio_features = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=spotify_cid, client_secret=spotify_secret, redirect_uri=redirect_uri))
-
+sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=spotify_cid, client_secret=spotify_secret, redirect_uri=redirect_uri, scope=scope))
 
 liked_songs_df = pd.DataFrame()
 liked_songs_features_df = pd.DataFrame()
 
-
 api_limit = 50
-total_songs = sp_read_liked_songs.current_user_saved_tracks(limit=api_limit, offset=0)['total']
+total_songs = sp.current_user_saved_tracks(limit=api_limit, offset=0)['total']
 
 offset = 0
-# while offset < total_songs:
-while offset <= 99:
-	liked_songs = sp_read_liked_songs.current_user_saved_tracks(limit=api_limit, offset=offset)
+while offset < total_songs:
+# while offset <= 99:
+	liked_songs = sp.current_user_saved_tracks(limit=api_limit, offset=offset)
 	df_add = pd.json_normalize(liked_songs['items']).reset_index()
 	liked_songs_df = pd.concat([liked_songs_df, df_add])
 	
 	track_list = df_add['track.uri'].tolist()
-	track_features = sp_audio_features.audio_features(tracks=track_list) # https://developer.spotify.com/documentation/web-api/reference/#/operations/get-several-audio-features # audio_analysis --> save for later / second try?
+	track_features = sp.audio_features(tracks=track_list) # https://developer.spotify.com/documentation/web-api/reference/#/operations/get-several-audio-features # audio_analysis --> save for later / second try?
 	track_features = pd.json_normalize(track_features)
 	liked_songs_features_df = pd.concat([liked_songs_features_df, track_features])
 
@@ -116,6 +108,30 @@ song_labels = pd.DataFrame(liked_songs_features_df)
 song_labels['labels'] = labels
 # song_labels.to_csv('song_labels.csv')
 
-print(song_labels)
+song_labels.to_csv('test_songs.csv')
+
+### create playlists
+total_playlists = song_labels['labels'].max()
+
+for x in range(total_playlists + 1):
+	playlist_name = "autoPlaylist_" + str(x)
+	playlist_result = sp.user_playlist_create(username, name=playlist_name)
+	playlist_id = playlist_result['external_urls']['spotify']
+
+	track_ids = song_labels[song_labels['labels']==x]['id'].tolist()
+
+	add_max = 100
+	current_track_low = 0
+	current_track_high = 100
+	if len(track_ids) > add_max:
+		while current_track_low < len(track_ids):
+			current_ids = track_ids[current_track_low:current_track_high]
+			sp.user_playlist_add_tracks(username, playlist_id, current_ids)
+			current_track_low += add_max
+			current_track_high += add_max
+	else:
+		sp.user_playlist_add_tracks(username, playlist_id, track_ids)
+
+
 
 
