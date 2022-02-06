@@ -172,8 +172,7 @@ def create_playlist(song_labels, username, add_max=100, current_track_low=0, cur
 		else:
 			sp.user_playlist_add_tracks(username, playlist_id, track_ids)
 
-
-if __name__ == '__main__':
+def main():
 	liked_songs_features_df = create_audio_featres_df()
 	PCA_components = PCA_execute(liked_songs_features_df) 
 	# pca_scree_plot(PCA_components, plt_show=True, plt_save=True, png_name='vX_screeplot.png')
@@ -181,4 +180,9 @@ if __name__ == '__main__':
 	pca_clusters, song_labels_df, labels = cluster_algo(PCA_components, liked_songs_features_df, cluster_num=15, kmeans=True, birch=False, dbscan=False, gaussian=False)# should only choose one
 	# cluster_scatter_plot(PCA_components, labels, plt_save=True, png_name='vX_cluster_scatter_plot.png', plt_show=True)
 	create_playlist(song_labels_df, username)
+
+
+if __name__ == '__main__':
+	main()
+	
 
