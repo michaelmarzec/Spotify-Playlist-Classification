@@ -19,7 +19,6 @@ from spotipy.oauth2 import SpotifyOAuth
 # API Calls #
 print('model initated')
 #ADD To LOCAL ENVIRONMENT #####################################
-
 redirect_uri = 'http://127.0.0.1:9090'
 username = 'michaelmarzec11'
 scope = 'user-library-read playlist-modify-public'
@@ -33,7 +32,7 @@ def create_audio_featres_df(api_limit=50, offset=0):
 
 	total_songs = sp.current_user_saved_tracks(limit=api_limit, offset=0)['total']
 
-	while offset < total_songs: # 99 #total_songs
+	while offset < total_songs:
 		liked_songs = sp.current_user_saved_tracks(limit=api_limit, offset=offset)
 		df_add = pd.json_normalize(liked_songs['items']).reset_index()
 		liked_songs_df = pd.concat([liked_songs_df, df_add])
@@ -63,7 +62,7 @@ def append_trackName_artist(append_liked_songs_df):# append track name + artist 
 	append_liked_songs_df['arist_name'] = track_artists
 	return append_liked_songs_df
 
-def PCA_execute(df_pca_prep): # Prep for PCA / Clustering (reduce, standardize)
+def PCA_execute(df_pca_prep, threshold=0.90): # Prep for PCA / Clustering (reduce, standardize)
 	columns_for_clustering = ['danceability','energy','key','loudness','mode','speechiness','acousticness','instrumentalness','liveness','valence','tempo','time_signature'] # duraion_ms???
 	v2_columns_for_clustering = ['danceability','energy','loudness','acousticness','instrumentalness','liveness','valence','tempo']
 	
@@ -73,16 +72,16 @@ def PCA_execute(df_pca_prep): # Prep for PCA / Clustering (reduce, standardize)
 
 	# pca = PCA(2)
 	# pca = PCA(n_components=9) # 9 componenets due to marginal improvement at 10 and reaches ~95% variance explained
-	pca = PCA(0.95)
+	pca = PCA(threshold)
 	pca_comps = pca.fit_transform(scaled_df)
 	pca_comps = pd.DataFrame(pca_comps)
-	return pca_comps
+	return pca_comps, pca
 
-def pca_scree_plot(pca_comps, plt_save=False, png_name='screePlot.png', plt_show=False): #PCA Scree Plot --> Currently, implies 9
+def pca_scree_plot(pca_comps, pca, plt_save=False, png_name='screePlot.png', plt_show=False): #PCA Scree Plot --> Currently, implies 9
 	principalDf = pd.DataFrame(data = pca_comps)
 	PC_values = np.arange(pca.n_components_) + 1
 	plt.plot(PC_values, pca.explained_variance_ratio_, 'ro-', linewidth=2)
-	plt.title('Scree Plot')
+	plt.title('Scree Plot: 0.999 Variance Threshold')
 	plt.xlabel('Principal Component')
 	plt.ylabel('Proportion of Variance Explained')
 	if plt_save == True:
@@ -147,7 +146,8 @@ def cluster_algo(pca_comps, liked_songs_df, cluster_num=20, kmeans=False, birch=
 
 def cluster_scatter_plot(pca_comps, labels, plt_save=False, png_name='cluster_scatter_plot.png', plt_show=False):
 	plt.scatter(pca_comps[0], pca_comps[1], c=labels)
-	plt.savefig('v8_fig.png')
+	plt.title('V6: K-Means Clustering Results')
+	plt.savefig(png_name)
 	if plt_save == True:
 		plt.savefig(png_name)
 	if plt_show == True:
@@ -174,12 +174,12 @@ def create_playlist(song_labels, username, add_max=100, current_track_low=0, cur
 
 def main():
 	liked_songs_features_df = create_audio_featres_df()
-	PCA_components = PCA_execute(liked_songs_features_df) 
-	# pca_scree_plot(PCA_components, plt_show=True, plt_save=True, png_name='vX_screeplot.png')
-	# intertia_plot(PCA_components, no_clusters=26, plt_show=True, plt_save=True, png_name='vX_inertiaplot.png')
-	pca_clusters, song_labels_df, labels = cluster_algo(PCA_components, liked_songs_features_df, cluster_num=15, kmeans=True, birch=False, dbscan=False, gaussian=False)# should only choose one
-	# cluster_scatter_plot(PCA_components, labels, plt_save=True, png_name='vX_cluster_scatter_plot.png', plt_show=True)
-	create_playlist(song_labels_df, username)
+	PCA_components, pca = PCA_execute(liked_songs_features_df, threshold=0.90) 
+	# pca_scree_plot(PCA_components, pca, plt_show=False, plt_save=True, png_name='vX_screeplot.png')
+	# intertia_plot(PCA_components, no_clusters=16, plt_show=False, plt_save=True, png_name='vX_inertiaplot.png')
+	pca_clusters, song_labels_df, labels = cluster_algo(PCA_components, liked_songs_features_df, cluster_num=20, kmeans=True, birch=False, dbscan=False, gaussian=False)# should only choose one
+	cluster_scatter_plot(PCA_components, labels, plt_save=True, png_name='vX_cluster_scatter_plot.png', plt_show=True)
+	# create_playlist(song_labels_df, username)
 
 
 if __name__ == '__main__':
