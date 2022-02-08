@@ -18,7 +18,10 @@ from spotipy.oauth2 import SpotifyOAuth
 
 # API Calls #
 print('model initated')
-#ADD To LOCAL ENVIRONMENT #####################################
+############################################################
+spotify_cid = os.getenv('spotify_cid')
+spotify_secret = os.getenv('spotify_secret')
+spotify_secret = '3c97cdd90ccf424c8d8e0fcddf9590a7'
 redirect_uri = 'http://127.0.0.1:9090'
 username = 'michaelmarzec11'
 scope = 'user-library-read playlist-modify-public'
@@ -146,7 +149,7 @@ def cluster_algo(pca_comps, liked_songs_df, cluster_num=20, kmeans=False, birch=
 
 def cluster_scatter_plot(pca_comps, labels, plt_save=False, png_name='cluster_scatter_plot.png', plt_show=False):
 	plt.scatter(pca_comps[0], pca_comps[1], c=labels)
-	plt.title('V6: K-Means Clustering Results')
+	# plt.title('V6: K-Means Clustering Results')
 	plt.savefig(png_name)
 	if plt_save == True:
 		plt.savefig(png_name)
@@ -178,8 +181,8 @@ def main():
 	# pca_scree_plot(PCA_components, pca, plt_show=False, plt_save=True, png_name='vX_screeplot.png')
 	# intertia_plot(PCA_components, no_clusters=16, plt_show=False, plt_save=True, png_name='vX_inertiaplot.png')
 	pca_clusters, song_labels_df, labels = cluster_algo(PCA_components, liked_songs_features_df, cluster_num=20, kmeans=True, birch=False, dbscan=False, gaussian=False)# should only choose one
-	cluster_scatter_plot(PCA_components, labels, plt_save=True, png_name='vX_cluster_scatter_plot.png', plt_show=True)
-	# create_playlist(song_labels_df, username)
+	# cluster_scatter_plot(PCA_components, labels, plt_save=True, png_name='vX_cluster_scatter_plot.png', plt_show=True)
+	create_playlist(song_labels_df, username)
 
 
 if __name__ == '__main__':
