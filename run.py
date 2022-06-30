@@ -1,4 +1,4 @@
-from utils import api_spotify
+from utils import main
 
 if __name__ == '__main__':
-	api_spotify.main()
+	main()
